@@ -280,7 +280,7 @@ async def analyze_image(
     gate_base_url = str(request.base_url).rstrip("/")
 
     try:
-        return await _gate_service.analyze(report, gate_base_url=gate_base_url)
+        return await _gate_service.analyze(report, gate_base_url=gate_base_url)  # type: ignore[union-attr]
     except httpx.ConnectError as exc:
         raise HTTPException(
             status_code=503,
@@ -308,11 +308,11 @@ async def get_history(
     image_name: str,
     limit: int = 20,
     authorization: str | None = Header(default=None),
-    request: Request = None,
+    request: Request | None = None,
 ):
     """Return the scan history for a specific image (requires DB)."""
     _require_token(authorization, _client_ip(request) if request else "unknown")
-    if not _repo.is_available:
+    if not _repo or not _repo.is_available:
         raise HTTPException(
             status_code=503,
             detail="Database not configured. Set DATABASE_URL to enable history.",
@@ -326,11 +326,11 @@ async def get_history(
 @app.get("/exceptions", response_model=list[CVEException], tags=["whitelist"])
 async def list_exceptions(
     authorization: str | None = Header(default=None),
-    request: Request = None,
+    request: Request | None = None,
 ):
     """List all active CVE exceptions (whitelist)."""
     _require_token(authorization, _client_ip(request) if request else "unknown")
-    if not _repo.is_available:
+    if not _repo or not _repo.is_available:
         raise HTTPException(
             status_code=503,
             detail="Database not configured. Set DATABASE_URL to enable whitelist.",
@@ -342,11 +342,11 @@ async def list_exceptions(
 async def add_exception(
     exc: CVEException,
     authorization: str | None = Header(default=None),
-    request: Request = None,
+    request: Request | None = None,
 ):
     """Add or update a CVE exception (whitelist entry)."""
     _require_token(authorization, _client_ip(request) if request else "unknown")
-    if not _repo.is_available:
+    if not _repo or not _repo.is_available:
         raise HTTPException(
             status_code=503,
             detail="Database not configured. Set DATABASE_URL to enable whitelist.",
@@ -360,11 +360,11 @@ async def add_exception(
 async def delete_exception(
     cve_id: str,
     authorization: str | None = Header(default=None),
-    request: Request = None,
+    request: Request | None = None,
 ):
     """Deactivate a CVE exception."""
     _require_token(authorization, _client_ip(request) if request else "unknown")
-    if not _repo.is_available:
+    if not _repo or not _repo.is_available:
         raise HTTPException(
             status_code=503,
             detail="Database not configured.",
@@ -692,7 +692,7 @@ def _render_dashboard(title: str, records: list[ScanRecord], exceptions: list[CV
 async def dashboard_overview(request: Request):
     """Overall security dashboard — recent scans across all images."""
     _require_dashboard_token(request)
-    if not _repo.is_available:
+    if not _repo or not _repo.is_available:
         return HTMLResponse(
             content="<h1>Dashboard unavailable</h1><p>Set DATABASE_URL to enable the dashboard.</p>",
             status_code=503,
@@ -706,7 +706,7 @@ async def dashboard_overview(request: Request):
 async def dashboard_image(image_name: str, request: Request):
     """Security dashboard for a specific image — history and trend."""
     _require_dashboard_token(request)
-    if not _repo.is_available:
+    if not _repo or not _repo.is_available:
         return HTMLResponse(
             content="<h1>Dashboard unavailable</h1><p>Set DATABASE_URL to enable the dashboard.</p>",
             status_code=503,
