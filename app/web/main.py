@@ -518,10 +518,42 @@ tbody tr:last-child td{border-bottom:none}
 @media(max-width:900px){.container{padding:16px}.topbar{padding:0 16px;gap:12px}.stats-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.topbar{min-height:52px}.topbar-sub{display:none}.stats-grid{gap:10px}.stat-value{font-size:1.7rem}.img-search{flex-direction:column}.img-search input{min-width:unset;width:100%}.form-grid{grid-template-columns:1fr}.chart-donut-wrap{flex-direction:column}.col-date{display:none}.detail-meta{flex-direction:column;gap:8px}}
 @media(max-width:400px){.stat-value{font-size:1.5rem}}
+/* ── Light theme ───────────────────────────────────────────────────────── */
+html{transition:background-color .2s,color .2s}
+[data-theme="light"]{
+  --bg:#f4f2ff;--bg2:#ebe8f9;--card:#fff;--card2:#f0eeff;
+  --border:#b0a8e0;--border2:#cec8f0;
+  --text:#0d0b1e;--text2:#474080;--muted:#6b6080;
+}
+[data-theme="light"] .topbar{box-shadow:0 2px 12px rgba(30,0,255,.08)}
+[data-theme="light"] .scan-row:hover td{background:rgba(30,0,255,.04)}
+/* Theme button */
+.theme-btn{background:none;border:1px solid var(--border2);border-radius:var(--rs);padding:6px 12px;cursor:pointer;color:var(--text2);display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;transition:all .15s;line-height:1}
+.theme-btn:hover{background:var(--card2);border-color:var(--border);color:var(--text)}
+.theme-btn svg{flex-shrink:0}
+/* Stat icon SVG */
+.stat-icon{position:absolute;top:14px;right:14px;opacity:.2;color:var(--ac);display:flex}
+.stat-icon svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* Search icon wrapper */
+.img-search-lbl{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.85rem;white-space:nowrap}
+.img-search-lbl svg{flex-shrink:0;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 """
 
 _DASHBOARD_JS = """
 (function(){
+  /* ── Theme toggle ─────────────────────────────────────── */
+  var isDark=(localStorage.getItem('hf-theme')||'dark')==='dark';
+  function applyTheme(dark){
+    document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+    localStorage.setItem('hf-theme',dark?'dark':'light');
+    isDark=dark;
+    var lbl=document.getElementById('theme-lbl');
+    if(lbl)lbl.textContent=dark?'Light':'Dark';
+  }
+  applyTheme(isDark);
+  var themeBtn=document.getElementById('theme-btn');
+  if(themeBtn)themeBtn.addEventListener('click',function(){applyTheme(!isDark);});
+
   var tok=new URLSearchParams(window.location.search).get('token')||'';
   function withTok(u){return tok?u+(u.indexOf('?')===-1?'?':'&')+'token='+encodeURIComponent(tok):u;}
   function authHdr(){return tok?{'Authorization':'Bearer '+tok,'Content-Type':'application/json'}:{'Content-Type':'application/json'};}
@@ -672,8 +704,8 @@ def _bar_chart_svg(records: list[ScanRecord]) -> str:
         label = str(int(max_score * frac))
         parts.append(
             f'<line x1="{ML}" y1="{gy:.1f}" x2="{W - MR}" y2="{gy:.1f}"'
-            f' stroke="#474080" stroke-width="1" stroke-dasharray="4,3"/>'
-            f'<text x="{ML - 6}" y="{gy + 4:.1f}" fill="#808066" font-size="10"'
+            f' style="stroke:var(--border)" stroke-width="1" stroke-dasharray="4,3"/>'
+            f'<text x="{ML - 6}" y="{gy + 4:.1f}" style="fill:var(--muted)" font-size="10"'
             f' text-anchor="end">{label}</text>'
         )
     for i, (r, score) in enumerate(zip(chart_data, scores)):
@@ -691,12 +723,12 @@ def _bar_chart_svg(records: list[ScanRecord]) -> str:
         )
         if n <= 8 or i % max(1, n // 8) == 0 or i == n - 1:
             parts.append(
-                f'<text x="{x + bw_actual / 2:.1f}" y="{H - 6}" fill="#808066"'
+                f'<text x="{x + bw_actual / 2:.1f}" y="{H - 6}" style="fill:var(--muted)"'
                 f' font-size="9" text-anchor="middle">{_esc(ts)}</text>'
             )
     parts.append(
-        f'<line x1="{ML}" y1="{MT}" x2="{ML}" y2="{MT + ch}" stroke="#474080" stroke-width="1.5"/>'
-        f'<line x1="{ML}" y1="{MT + ch}" x2="{W - MR}" y2="{MT + ch}" stroke="#474080" stroke-width="1.5"/>'
+        f'<line x1="{ML}" y1="{MT}" x2="{ML}" y2="{MT + ch}" style="stroke:var(--border)" stroke-width="1.5"/>'
+        f'<line x1="{ML}" y1="{MT + ch}" x2="{W - MR}" y2="{MT + ch}" style="stroke:var(--border)" stroke-width="1.5"/>'
     )
     return f'<svg viewBox="0 0 {W} {H}" style="width:100%;display:block;overflow:visible">\n' + "\n".join(parts) + "\n</svg>"
 
@@ -712,7 +744,7 @@ def _donut_chart_svg(approved: int, warning: int, rejected: int) -> str:
         (warning, "#FFBD00", "Warning"),
         (rejected, "#f87171", "Rejected"),
     ]
-    parts = [f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="#1a1635" stroke-width="{sw}"/>']
+    parts = [f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" style="stroke:var(--bg2)" stroke-width="{sw}"/>']
     offset = 0.0
     for count, color, label in segs:
         if count == 0:
@@ -727,15 +759,15 @@ def _donut_chart_svg(approved: int, warning: int, rejected: int) -> str:
         )
         offset += dash
     parts.append(
-        f'<text x="{cx}" y="{cy - 10}" text-anchor="middle" fill="#FFFB00" font-size="28" font-weight="800">{total}</text>'
-        f'<text x="{cx}" y="{cy + 16}" text-anchor="middle" fill="#808066" font-size="12">Total Scans</text>'
+        f'<text x="{cx}" y="{cy - 10}" text-anchor="middle" fill="#FFBD00" font-size="28" font-weight="800">{total}</text>'
+        f'<text x="{cx}" y="{cy + 16}" text-anchor="middle" style="fill:var(--muted)" font-size="12">Total Scans</text>'
     )
     for i, (count, color, label) in enumerate(segs):
         lx = 10 + i * 73
         pct = int(count / total * 100) if total > 0 else 0
         parts.append(
             f'<rect x="{lx}" y="230" width="14" height="14" rx="3" fill="{color}"/>'
-            f'<text x="{lx + 18}" y="242" fill="#808066" font-size="11">{label} {pct}%</text>'
+            f'<text x="{lx + 18}" y="242" style="fill:var(--muted)" font-size="11">{label} {pct}%</text>'
         )
     return (
         f'<svg viewBox="0 0 220 260" style="width:100%;max-width:240px;display:block;margin:0 auto">\n'
@@ -763,8 +795,8 @@ def _vuln_breakdown_svg(records: list[ScanRecord]) -> str:
     for frac in (0.25, 0.5, 0.75, 1.0):
         gy = MT + ch * (1 - frac)
         parts.append(
-            f'<line x1="{ML}" y1="{gy:.1f}" x2="{W - MR}" y2="{gy:.1f}" stroke="#474080" stroke-width="1" stroke-dasharray="4,3"/>'
-            f'<text x="{ML - 6}" y="{gy + 4:.1f}" fill="#808066" font-size="10" text-anchor="end">{int(max_val * frac)}</text>'
+            f'<line x1="{ML}" y1="{gy:.1f}" x2="{W - MR}" y2="{gy:.1f}" style="stroke:var(--border)" stroke-width="1" stroke-dasharray="4,3"/>'
+            f'<text x="{ML - 6}" y="{gy + 4:.1f}" style="fill:var(--muted)" font-size="10" text-anchor="end">{int(max_val * frac)}</text>'
         )
     for i, r in enumerate(chart_data):
         x = ML + i * bw + bar_gap / 2
@@ -787,11 +819,11 @@ def _vuln_breakdown_svg(records: list[ScanRecord]) -> str:
             )
         if n <= 8 or i % max(1, n // 8) == 0 or i == n - 1:
             parts.append(
-                f'<text x="{x + bw_actual / 2:.1f}" y="{H - 6}" fill="#808066" font-size="9" text-anchor="middle">{_esc(ts)}</text>'
+                f'<text x="{x + bw_actual / 2:.1f}" y="{H - 6}" style="fill:var(--muted)" font-size="9" text-anchor="middle">{_esc(ts)}</text>'
             )
     parts.append(
-        f'<line x1="{ML}" y1="{MT}" x2="{ML}" y2="{MT + ch}" stroke="#474080" stroke-width="1.5"/>'
-        f'<line x1="{ML}" y1="{MT + ch}" x2="{W - MR}" y2="{MT + ch}" stroke="#474080" stroke-width="1.5"/>'
+        f'<line x1="{ML}" y1="{MT}" x2="{ML}" y2="{MT + ch}" style="stroke:var(--border)" stroke-width="1.5"/>'
+        f'<line x1="{ML}" y1="{MT + ch}" x2="{W - MR}" y2="{MT + ch}" style="stroke:var(--border)" stroke-width="1.5"/>'
     )
     return (
         f'<svg viewBox="0 0 {W} {H}" style="width:100%;display:block;overflow:visible">\n'
@@ -895,6 +927,7 @@ def _render_dashboard(title: str, records: list[ScanRecord], exceptions: list[CV
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HexaFlow &#8212; {safe_title}</title>
 <style>{css}</style>
+<script>(function(){{var t=localStorage.getItem('hf-theme')||'dark';document.documentElement.setAttribute('data-theme',t);}})();</script>
 </head>
 <body>
 
@@ -912,13 +945,17 @@ def _render_dashboard(title: str, records: list[ScanRecord], exceptions: list[CV
   <span class="topbar-sub">{safe_title}</span>
   <div class="topbar-actions">
     <span>{trend}</span>
+    <button id="theme-btn" class="theme-btn" title="Switch theme">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <span id="theme-lbl">Light</span>
+    </button>
   </div>
 </header>
 
 <main class="container">
 
   <div class="img-search">
-    <span class="img-search-lbl">&#128269; Image history:</span>
+    <span class="img-search-lbl"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Image history:</span>
     <input id="img-input" type="text" placeholder="nginx:latest, myapp:v1.2.3 &#8212; press Enter">
     <button class="btn btn-primary" id="btn-view">View History</button>
     <button class="btn btn-ghost" id="btn-overview">&#8592; Overview</button>
@@ -926,31 +963,31 @@ def _render_dashboard(title: str, records: list[ScanRecord], exceptions: list[CV
 
   <div class="stats-grid">
     <div class="stat-card" style="--ac:#60a5fa">
-      <div class="stat-icon">&#128202;</div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 17v-4M11 17V9M15 17v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
       <div class="stat-label">Total Scans</div>
       <div class="stat-value">{total}</div>
       <div class="stat-pct">all time</div>
     </div>
     <div class="stat-card" style="--ac:#4ade80">
-      <div class="stat-icon">&#9989;</div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-5"/></svg></div>
       <div class="stat-label">Approved</div>
       <div class="stat-value">{approved}</div>
       <div class="stat-pct">{_pct(approved)}</div>
     </div>
     <div class="stat-card" style="--ac:#FFBD00">
-      <div class="stat-icon">&#9888;</div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
       <div class="stat-label">Warning</div>
       <div class="stat-value">{warning}</div>
       <div class="stat-pct">{_pct(warning)}</div>
     </div>
     <div class="stat-card" style="--ac:#f87171">
-      <div class="stat-icon">&#128683;</div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
       <div class="stat-label">Rejected</div>
       <div class="stat-value">{rejected}</div>
       <div class="stat-pct">{_pct(rejected)}</div>
     </div>
     <div class="stat-card" style="--ac:#c084fc">
-      <div class="stat-icon">&#128737;</div>
+      <div class="stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
       <div class="stat-label">CVE Exceptions</div>
       <div class="stat-value">{num_exc}</div>
       <div class="stat-pct">active</div>
@@ -1050,7 +1087,7 @@ def _render_dashboard(title: str, records: list[ScanRecord], exceptions: list[CV
         <button class="btn btn-gold" id="wl-submit">&#43; Add to Whitelist</button>
         <button class="btn btn-ghost" id="wl-clear">Clear</button>
       </div>
-      <div class="alert alert-ok" id="wl-ok">&#9989; Exception added. Reloading&#8230;</div>
+      <div class="alert alert-ok" id="wl-ok">Exception added successfully. Reloading&#8230;</div>
       <div class="alert alert-err" id="wl-error">Error</div>
     </div>
     {exc_section_html}
