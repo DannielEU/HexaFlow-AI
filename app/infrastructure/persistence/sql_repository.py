@@ -16,6 +16,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
+from domain.code_entities import CodeScanRecord
 from domain.entities import CVEException, ScanRecord
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,24 @@ CREATE TABLE IF NOT EXISTS cve_exceptions (
 CREATE INDEX IF NOT EXISTS idx_scan_history_image      ON scan_history(image_name);
 CREATE INDEX IF NOT EXISTS idx_scan_history_scanned_at ON scan_history(scanned_at);
 CREATE INDEX IF NOT EXISTS idx_cve_exceptions_cve_id   ON cve_exceptions(cve_id);
+
+CREATE TABLE IF NOT EXISTS code_scan_history (
+    id             INTEGER   PRIMARY KEY AUTOINCREMENT,
+    project_name   TEXT      NOT NULL,
+    commit_sha     TEXT,
+    branch         TEXT,
+    decision       TEXT      NOT NULL,
+    critical_count INTEGER   DEFAULT 0,
+    high_count     INTEGER   DEFAULT 0,
+    medium_count   INTEGER   DEFAULT 0,
+    low_count      INTEGER   DEFAULT 0,
+    files_analyzed INTEGER   DEFAULT 0,
+    ai_provider    TEXT,
+    scanned_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_code_scan_project    ON code_scan_history(project_name);
+CREATE INDEX IF NOT EXISTS idx_code_scan_scanned_at ON code_scan_history(scanned_at);
 """
 
 # PostgreSQL needs different DDL (SERIAL instead of AUTOINCREMENT)
@@ -83,6 +102,24 @@ CREATE TABLE IF NOT EXISTS cve_exceptions (
 CREATE INDEX IF NOT EXISTS idx_scan_history_image      ON scan_history(image_name);
 CREATE INDEX IF NOT EXISTS idx_scan_history_scanned_at ON scan_history(scanned_at);
 CREATE INDEX IF NOT EXISTS idx_cve_exceptions_cve_id   ON cve_exceptions(cve_id);
+
+CREATE TABLE IF NOT EXISTS code_scan_history (
+    id             SERIAL    PRIMARY KEY,
+    project_name   TEXT      NOT NULL,
+    commit_sha     TEXT,
+    branch         TEXT,
+    decision       TEXT      NOT NULL,
+    critical_count INTEGER   DEFAULT 0,
+    high_count     INTEGER   DEFAULT 0,
+    medium_count   INTEGER   DEFAULT 0,
+    low_count      INTEGER   DEFAULT 0,
+    files_analyzed INTEGER   DEFAULT 0,
+    ai_provider    TEXT,
+    scanned_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_code_scan_project    ON code_scan_history(project_name);
+CREATE INDEX IF NOT EXISTS idx_code_scan_scanned_at ON code_scan_history(scanned_at);
 """
 
 
@@ -129,6 +166,29 @@ def _row_to_exc(row: Any) -> CVEException:
         expires_at=_dt(row.expires_at),
         created_at=_dt(row.created_at),
         is_active=bool(row.is_active),
+    )
+
+
+def _row_to_code_scan(row: Any) -> CodeScanRecord:
+    scanned_at = row.scanned_at
+    if isinstance(scanned_at, str):
+        try:
+            scanned_at = datetime.fromisoformat(scanned_at)
+        except ValueError:
+            scanned_at = None
+    return CodeScanRecord(
+        id=row.id,
+        project_name=row.project_name,
+        commit_sha=row.commit_sha,
+        branch=row.branch,
+        decision=row.decision,
+        critical_count=row.critical_count or 0,
+        high_count=row.high_count or 0,
+        medium_count=row.medium_count or 0,
+        low_count=row.low_count or 0,
+        files_analyzed=row.files_analyzed or 0,
+        ai_provider=row.ai_provider,
+        scanned_at=scanned_at,
     )
 
 
@@ -247,3 +307,52 @@ class SQLRepository:
                 {"cve_id": cve_id.upper()},
             )
             await session.commit()
+
+    async def save_code_scan(self, record: CodeScanRecord) -> None:
+        async with self._session_factory() as session:
+            await session.execute(
+                text(
+                    "INSERT INTO code_scan_history "
+                    "(project_name, commit_sha, branch, decision, critical_count, "
+                    "high_count, medium_count, low_count, files_analyzed, ai_provider) "
+                    "VALUES (:project_name, :commit_sha, :branch, :decision, "
+                    ":critical_count, :high_count, :medium_count, :low_count, "
+                    ":files_analyzed, :ai_provider)"
+                ),
+                {
+                    "project_name": record.project_name,
+                    "commit_sha": record.commit_sha,
+                    "branch": record.branch,
+                    "decision": record.decision,
+                    "critical_count": record.critical_count,
+                    "high_count": record.high_count,
+                    "medium_count": record.medium_count,
+                    "low_count": record.low_count,
+                    "files_analyzed": record.files_analyzed,
+                    "ai_provider": record.ai_provider,
+                },
+            )
+            await session.commit()
+
+    async def get_code_history(
+        self, project_name: str, limit: int = 20
+    ) -> list[CodeScanRecord]:
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT * FROM code_scan_history WHERE project_name LIKE :name "
+                    "ORDER BY scanned_at DESC LIMIT :limit"
+                ),
+                {"name": f"%{project_name}%", "limit": limit},
+            )
+            return [_row_to_code_scan(r) for r in result.mappings().all()]
+
+    async def get_all_recent_code_scans(self, limit: int = 50) -> list[CodeScanRecord]:
+        async with self._session_factory() as session:
+            result = await session.execute(
+                text(
+                    "SELECT * FROM code_scan_history ORDER BY scanned_at DESC LIMIT :limit"
+                ),
+                {"limit": limit},
+            )
+            return [_row_to_code_scan(r) for r in result.mappings().all()]
