@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-trivy_to_gate.py — Trivy JSON → Sentinel-AI-CD adapter
+trivy_to_gate.py — Trivy JSON → HexaFlow adapter
 =======================================================
 Reads a Trivy JSON report, converts it to the ImageReport schema expected by
 the gate API, sends it, and exits with a code the CI/CD pipeline can act on.
@@ -158,13 +158,13 @@ def print_result(result: dict, gate_url: str, image_name: str) -> None:
     print("=" * 70 + "\n")
 
     # Machine-readable line for CI log parsers / PR comment scripts
-    print(f"::sentinel-dashboard::{dashboard_url}")
+    print(f"::hexaflow-dashboard::{dashboard_url}")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Send Trivy report to Sentinel-AI-CD gate.")
+    parser = argparse.ArgumentParser(description="Send Trivy report to HexaFlow gate.")
     parser.add_argument("--report",     required=True,  help="Path to Trivy JSON report")
     parser.add_argument("--image",      required=True,  help="Full image name (e.g. myapp:1.2.3)")
     parser.add_argument("--gate",       default="http://localhost:8000", help="Gate base URL")

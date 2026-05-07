@@ -1,10 +1,10 @@
-# Sentinel-AI-CD — Docker Compose PRODUCCIÓN / AZURE
+# HexaFlow — Docker Compose PRODUCCIÓN / AZURE
 # =====================================================
 # Uso: despliegue en Azure Container Instances, Azure App Service
 #      o cualquier VM/servidor con Docker.
 #
 # Arquitectura de producción:
-#   - Sentinel Gate (este compose) → Azure
+#   - HexaFlow Gate (este compose) → Azure
 #   - Ollama                       → EC2 externo (OLLAMA_URL apunta a él)
 #   - Base de datos                → Azure Database for PostgreSQL (externa)
 #   - La imagen se consume desde Azure Container Registry (ACR)
@@ -17,16 +17,16 @@
 
 services:
 
-  # ── Sentinel Gate — FastAPI ───────────────────────────────────────────────
+  # ── HexaFlow Gate — FastAPI ───────────────────────────────────────────────
   gate:
     # Opción A — imagen desde Azure Container Registry (producción):
-    #   image: ${ACR_LOGIN_SERVER}/sentinel-gate:${IMAGE_TAG:-latest}
+    #   image: ${ACR_LOGIN_SERVER}/hexaflow-gate:${IMAGE_TAG:-latest}
     # Opción B — build local (si no usas ACR todavía):
     build:
       context: .
       dockerfile: app/Dockerfile
 
-    container_name: sentinel-gate
+    container_name: hexaflow-gate
     restart: unless-stopped
 
     ports:

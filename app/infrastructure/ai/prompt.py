@@ -34,7 +34,7 @@ def build_analysis_prompt(report: ImageReport) -> str:
 
     extra = "\n".join(extra_sections)
 
-    return f"""You are Sentinel, an automated container security gate integrated into a CI/CD pipeline.
+    return f"""You are HexaFlow, an automated container security gate integrated into a CI/CD pipeline.
 You are ALREADY the automated scanning system — this analysis runs automatically on every pull request.
 Your role is to approve or reject container image deployments based on security findings from Trivy.
 

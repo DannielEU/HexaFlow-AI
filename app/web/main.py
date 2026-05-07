@@ -1,5 +1,5 @@
 """
-Sentinel-AI-CD — Web entry point (FastAPI)
+HexaFlow — Web entry point (FastAPI)
 ==========================================
 Thin controller layer: authentication, rate limiting, routing.
 All business logic lives in application.gate_service.GateService.
@@ -66,14 +66,14 @@ async def lifespan(app: FastAPI):
     _repo = await create_repository()
     _gate_service = GateService(ai_provider=ai_provider, repository=_repo)
 
-    logger.info("Sentinel-AI-CD gate ready")
+    logger.info("HexaFlow gate ready")
     yield
     # Cleanup (nothing needed currently)
 
 
 # ── App ───────────────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="Sentinel-AI-CD Deployment Gate",
+    title="HexaFlow Deployment Gate",
     description=(
         "Intelligent CI/CD security gate for container images. "
         "Combines deterministic OWASP rules, secrets detection, CVE whitelist, "
@@ -213,7 +213,7 @@ def root():
     db_available = _repo.is_available if _repo else False
     return {
         "status": "ok",
-        "service": "Sentinel-AI-CD Deployment Gate",
+        "service": "HexaFlow Deployment Gate",
         "version": "2.0.0",
         "db_enabled": db_available,
     }

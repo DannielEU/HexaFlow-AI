@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test rate limiting and authentication on Sentinel AI-CD Gate.
+Test rate limiting and authentication on HexaFlow Gate.
 
 Usage:
     python3 test_rate_limit.py --url http://localhost:8000
@@ -223,13 +223,13 @@ def test_valid_request(base_url: str, token: Optional[str] = None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Test Sentinel AI-CD Gate rate limiting and authentication"
+        description="Test HexaFlow Gate rate limiting and authentication"
     )
     parser.add_argument(
         "--url",
         type=str,
         default="http://localhost:8000",
-        help="Base URL of Sentinel Gate (default: http://localhost:8000)"
+        help="Base URL of HexaFlow Gate (default: http://localhost:8000)"
     )
     parser.add_argument(
         "--token",
@@ -266,7 +266,7 @@ def main():
 
     print(f"\n{Colors.BOLD}{Colors.BLUE}")
     print("╔════════════════════════════════════════════════════════════════════╗")
-    print("║  Sentinel AI-CD Gate — Rate Limiting & Authentication Tester      ║")
+    print("║  HexaFlow Gate — Rate Limiting & Authentication Tester      ║")
     print("╚════════════════════════════════════════════════════════════════════╝")
     print(f"{Colors.RESET}")
 

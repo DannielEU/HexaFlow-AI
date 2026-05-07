@@ -2,7 +2,7 @@
 SQLRepository — async persistence adapter for SQLite and PostgreSQL.
 
 Supported DATABASE_URL formats:
-  SQLite:     sqlite+aiosqlite:///./data/sentinel.db
+  SQLite:     sqlite+aiosqlite:///./data/hexaflow.db
   PostgreSQL: postgresql+asyncpg://user:pass@host:5432/dbname
 
 Tables are created automatically on first use (CREATE TABLE IF NOT EXISTS).

@@ -1,14 +1,14 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Sentinel Security Gate — workflow reutilizable
+# HexaFlow Security Gate — workflow reutilizable
 # ─────────────────────────────────────────────────────────────────────────────
-# Copia este archivo a .github/workflows/sentinel.yml en CUALQUIER proyecto
+# Copia este archivo a .github/workflows/hexaflow.yml en CUALQUIER proyecto
 # que tenga un Dockerfile. No requiere dependencias externas.
 #
 # Configuración en el repo destino (Settings → Variables / Secrets):
 #
 #   Variables (vars.*):
-#     SENTINEL_GATE_URL    URL del gate desplegado
-#                          default: https://sentinelia-avd7b2gabqe3b2g8.brazilsouth-01.azurewebsites.net
+#     HEXAFLOW_GATE_URL    URL del gate desplegado
+#                          default: https://hexaflow-avd7b2gabqe3b2g8.brazilsouth-01.azurewebsites.net
 #     SENTINEL_AI_ENABLED  "true" | "false"   (default: "true")
 #                          false → el gate se llama igualmente pero sin IA activa en servidor
 #     SENTINEL_DOCKERFILE  ruta al Dockerfile  (default: "Dockerfile")
@@ -17,7 +17,7 @@
 #     SENTINEL_TOKEN       Bearer token de autenticación del gate
 # ─────────────────────────────────────────────────────────────────────────────
 
-name: Sentinel Security Gate
+name: HexaFlow Security Gate
 
 on:
   pull_request:
@@ -28,12 +28,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  sentinel:
-    name: Trivy → Sentinel Gate
+  hexaflow:
+    name: Trivy → HexaFlow Gate
     runs-on: ubuntu-latest
 
     env:
-      SENTINEL_GATE_URL: ${{ vars.SENTINEL_GATE_URL || 'https://sentinelia-avd7b2gabqe3b2g8.brazilsouth-01.azurewebsites.net' }}
+      HEXAFLOW_GATE_URL: ${{ vars.HEXAFLOW_GATE_URL || 'https://hexaflow-avd7b2gabqe3b2g8.brazilsouth-01.azurewebsites.net' }}
       SENTINEL_AI_ENABLED: ${{ vars.SENTINEL_AI_ENABLED || 'true' }}
       SENTINEL_DOCKERFILE: ${{ vars.SENTINEL_DOCKERFILE || 'Dockerfile' }}
 
@@ -77,12 +77,12 @@ jobs:
           echo "── Trivy table summary ──"
           trivy image --format table --exit-code 0 "${{ steps.vars.outputs.image }}"
 
-      # ── 6. Enviar al Sentinel Gate ───────────────────────────────────────────
-      - name: Send to Sentinel Gate
+      # ── 6. Enviar al HexaFlow Gate ───────────────────────────────────────────
+      - name: Send to HexaFlow Gate
         id: gate
         env:
           IMAGE_NAME: ${{ steps.vars.outputs.image }}
-          SENTINEL_GATE_URL: ${{ env.SENTINEL_GATE_URL }}
+          HEXAFLOW_GATE_URL: ${{ env.HEXAFLOW_GATE_URL }}
           SENTINEL_TOKEN: ${{ secrets.SENTINEL_TOKEN }}
           SENTINEL_AI_ENABLED: ${{ env.SENTINEL_AI_ENABLED }}
         run: |
@@ -112,7 +112,7 @@ jobs:
           os_family = os_info.get("Family", "unknown")
 
           image_name  = os.environ["IMAGE_NAME"]
-          gate_url    = os.environ.get("SENTINEL_GATE_URL", "").rstrip("/")
+          gate_url    = os.environ.get("HEXAFLOW_GATE_URL", "").rstrip("/")
           token       = os.environ.get("SENTINEL_TOKEN", "")
           ai_enabled  = os.environ.get("SENTINEL_AI_ENABLED", "true").lower() == "true"
 
@@ -183,7 +183,7 @@ jobs:
           GATE_DECISION: ${{ steps.gate.outputs.gate_decision }}
           IMAGE_NAME: ${{ steps.vars.outputs.image }}
           SENTINEL_AI_ENABLED: ${{ env.SENTINEL_AI_ENABLED }}
-          SENTINEL_GATE_URL: ${{ env.SENTINEL_GATE_URL }}
+          HEXAFLOW_GATE_URL: ${{ env.HEXAFLOW_GATE_URL }}
         run: |
           python3 << 'PYEOF'
           import json, os, datetime
@@ -192,7 +192,7 @@ jobs:
           decision   = os.environ.get("GATE_DECISION", "UNKNOWN")
           image_name = os.environ.get("IMAGE_NAME", "-")
           ai_enabled = os.environ.get("SENTINEL_AI_ENABLED", "true").lower() == "true"
-          gate_url   = os.environ.get("SENTINEL_GATE_URL", "")
+          gate_url   = os.environ.get("HEXAFLOW_GATE_URL", "")
           ts         = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
 
           try:
@@ -221,7 +221,7 @@ jobs:
           ai_status  = "habilitada" if ai_enabled else "deshabilitada"
 
           lines = [
-              f"## {icon} Sentinel Security Gate — {decision}",
+              f"## {icon} HexaFlow Security Gate — {decision}",
               f"_`{image_name}` · {ts} · IA: {ai_status}_",
               "",
               "### Resumen de vulnerabilidades",
@@ -306,7 +306,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sentinel-security-report-${{ github.sha }}
+          name: hexaflow-security-report-${{ github.sha }}
           path: |
             trivy_report.json
             pr_comment.md
