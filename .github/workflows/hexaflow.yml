@@ -16,7 +16,6 @@
 #   Secrets (secrets.*):
 #     HEXAFLOW_TOKEN       Bearer token de autenticación del gate
 # ─────────────────────────────────────────────────────────────────────────────
-
 name: HexaFlow Security Gate
 
 on:
